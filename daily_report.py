@@ -125,7 +125,7 @@ def summarize_webapp_best_of_yesterday():
 def summarize_desktop_best_of_yesterday():
     urls = {
         "Mac": "https://api-observability.browserstack.com/api/v1/projects/LCNC+Desktop+Tests+-+Mac/builds/v2",
-        "Windows": "https://api-observability.browserstack.com/api/v1/projects/LCNC+Desktop+Tests+-+Windows/builds/v2",
+        "Windows": "https://api-observability.browserstack.com/api/v1/projects/LCNC+Desktop+SDK+Build/builds/v2/",
     }
 
     summaries = ["*LCNC Desktop Tests*"]
