@@ -20,8 +20,8 @@ AUTH_TOKEN = os.getenv("AUTH_TOKEN")
 HEADERS_LCNC = {"Authorization": f"Bearer {AUTH_TOKEN}", "Accept": "application/json"}
 
 BS_HEADERS = {
-    "X-Service-API-Key": os.getenv("BS_SERVICE_API_KEY"),
-    "X-Auth-Override": os.getenv("BS_AUTH_OVERRIDE")
+    "X-Service-API-Key": os.getenv("X_SERVICE_API_KEY"),
+    "X-Auth-Override": os.getenv("X_AUTH_OVERRIDE")
 }
 
 # Endpoints
