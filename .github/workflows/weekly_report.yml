@@ -1,0 +1,38 @@
+name: Weekly LCNC Stability Report
+
+on:
+  schedule:
+    - cron: "30 5 * * 1"     # Runs Monday 11:00 AM IST (05:30 UTC)
+  workflow_dispatch: {}       # For manual trigger
+
+jobs:
+  weekly-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests pytz
+
+      - name: Run Weekly Report Script
+        env:
+          SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
+          QA_OPS_GROUP_ID: ${{ secrets.QA_OPS_GROUP_ID }}
+
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+
+          BS_API_KEY: ${{ secrets.BS_API_KEY }}
+          BS_AUTH_OVERRIDE: ${{ secrets.BS_AUTH_OVERRIDE }}
+
+        run: |
+          python .github/scripts/weekly_report.py
