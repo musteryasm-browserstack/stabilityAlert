@@ -35,4 +35,4 @@ jobs:
           BS_AUTH_OVERRIDE: ${{ secrets.BS_AUTH_OVERRIDE }}
 
         run: |
-          python .github/scripts/weekly_report.py
+          python .github/weekly_report.py
