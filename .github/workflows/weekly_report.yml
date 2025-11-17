@@ -2,8 +2,8 @@ name: Weekly LCNC Stability Report
 
 on:
   schedule:
-    - cron: "30 5 * * 1"     # Runs Monday 11:00 AM IST (05:30 UTC)
-  workflow_dispatch: {}       # For manual trigger
+    - cron: "30 5 * * 1"     # Monday 11:00 AM IST (05:30 UTC)
+  workflow_dispatch: {}       # Manual trigger
 
 jobs:
   weekly-report:
@@ -35,4 +35,4 @@ jobs:
           BS_AUTH_OVERRIDE: ${{ secrets.BS_AUTH_OVERRIDE }}
 
         run: |
-          python /weekly_report.py
+          python weekly_report.py
