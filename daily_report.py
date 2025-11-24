@@ -21,8 +21,10 @@ BS_HEADERS = {
     "X-Auth-Override": X_AUTH_OVERRIDE,
 }
 
-SLACK_CHANNEL = "C06T7FZ0BFZ"
-QA_OPS_GROUP_ID = "S07L05V67B7"
+#"C06T7FZ0BFZ" #lcnc qa 
+
+SLACK_CHANNEL = "C09SV14UWBZ" #lcnc qa 
+QA_OPS_GROUP_ID = "S07L05V67B7z" 
 
 IST = pytz.timezone("Asia/Kolkata")
 UTC = pytz.utc
@@ -154,27 +156,39 @@ def summarize_desktop_best_of_yesterday():
                 summaries.append(f"{platform} - N/A (No builds yesterday)")
                 continue
 
-            # Find best build (highest stability)
-            best_build = None
-            best_stability = -1
-            best_passed = best_failed = best_total = 0
-
+            # NEW: Filter out builds with less than 50 cases
+            valid_builds = []
             for b in filtered:
                 stats = b.get("statusStats", {})
                 passed = stats.get("passed", 0)
                 failed = stats.get("failed", 0)
                 total = passed + failed
-                if total == 0:
-                    continue
+                if total >= 50:   # <--- IMPORTANT FILTER
+                    valid_builds.append(b)
 
+            if not valid_builds:
+                summaries.append(f"{platform} - N/A (No builds ≥ 50 cases yesterday)")
+                continue
+
+            # Find best build (highest stability)
+            best_build = None
+            best_stability = -1
+            best_passed = best_failed = best_total = 0
+
+            for b in valid_builds:
+                stats = b.get("statusStats", {})
+                passed = stats.get("passed", 0)
+                failed = stats.get("failed", 0)
+                total = passed + failed
                 stability = round((passed / total) * 100, 2)
+
                 if stability > best_stability:
                     best_stability = stability
                     best_build = b
                     best_passed, best_failed, best_total = passed, failed, total
 
             if not best_build:
-                summaries.append(f"{platform} - N/A (No valid runs yesterday)")
+                summaries.append(f"{platform} - N/A (No valid builds yesterday)")
                 continue
 
             when_dt = (
@@ -191,6 +205,7 @@ def summarize_desktop_best_of_yesterday():
             summaries.append(f"{platform} - Error fetching: {e}")
 
     return "\n".join(summaries)
+
 
 
 # ------------------------------------------------------------
