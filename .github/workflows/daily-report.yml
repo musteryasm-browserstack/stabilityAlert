@@ -2,8 +2,8 @@ name: Daily Stability Report
 
 on:
   schedule:
-    # Runs Tue–Sun at 11:00 AM IST (05:30 UTC)
-    - cron: '30 5 * * 2-7'
+    # Runs every day at 11:00 AM IST (which is 05:30 UTC)
+    - cron: '30 5 * * *'
   workflow_dispatch:  # allows manual runs
 
 jobs:
