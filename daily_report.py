@@ -294,7 +294,7 @@ def main():
             f"{webapp_msg}\n\n"
             f"{desktop_msg}\n\n"
             f"{api_msg}\n\n"
-            f"cc <!subteam^{QA_OPS_GROUP_ID}>"
+            f"cc <!subteam^{QA_OPS_GROUP_ID}> <@UPYJFHQ1M>"
         )
 
         print(final_message)
