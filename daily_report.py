@@ -23,8 +23,9 @@ BS_HEADERS = {
 
 #"C06T7FZ0BFZ" #lcnc qa 
 #C09SV14UWBZ - shivam-testing
+#lcnc regression  - C0A8JASC5DF
 
-SLACK_CHANNEL = "C06T7FZ0BFZ" #lcnc qa 
+SLACK_CHANNEL = "C0A8JASC5DF" #lcnc qa 
 QA_OPS_GROUP_ID = "S07L05V67B7" 
 
 IST = pytz.timezone("Asia/Kolkata")
