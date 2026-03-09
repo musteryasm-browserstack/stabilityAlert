@@ -24,7 +24,7 @@ BS_HEADERS = {
 #"C06T7FZ0BFZ" #lcnc qa 
 #C09SV14UWBZ - shivam-testing
 
-SLACK_CHANNEL = "C06T7FZ0BFZ" #lcnc qa 
+SLACK_CHANNEL = "C09SV14UWBZ" #lcnc qa 
 QA_OPS_GROUP_ID = "S07L05V67B7" 
 
 IST = pytz.timezone("Asia/Kolkata")
@@ -44,12 +44,35 @@ API_V1_URL = (
 # ------------------------------------------------------------
 # HELPERS
 # ------------------------------------------------------------
-def get_yesterday_time_range_utc():
+def get_report_date_range_utc():
+    """
+    Returns the (start_utc, end_utc) range for the report date.
+    On Mondays, reports Friday's results instead of yesterday's,
+    since there are no runs over the weekend.
+    """
     today_ist = datetime.now(IST).date()
-    yesterday_ist = today_ist - timedelta(days=1)
-    start_ist = IST.localize(datetime.combine(yesterday_ist, datetime.min.time()))
-    end_ist = IST.localize(datetime.combine(yesterday_ist, datetime.max.time()))
+
+    # Monday is weekday() == 0; go back 3 days to Friday
+    if today_ist.weekday() == 0:
+        report_date_ist = today_ist - timedelta(days=3)
+    else:
+        report_date_ist = today_ist - timedelta(days=1)
+
+    start_ist = IST.localize(datetime.combine(report_date_ist, datetime.min.time()))
+    end_ist = IST.localize(datetime.combine(report_date_ist, datetime.max.time()))
     return start_ist.astimezone(UTC), end_ist.astimezone(UTC)
+
+
+def get_report_label():
+    """
+    Returns a human-readable label for the report period,
+    e.g. 'Yesterday' or 'Friday (YYYY-MM-DD)'.
+    """
+    today_ist = datetime.now(IST).date()
+    if today_ist.weekday() == 0:
+        report_date = today_ist - timedelta(days=3)
+        return f"Friday ({report_date})"
+    return "Yesterday"
 
 
 def extract_test_counts(build_data):
@@ -75,8 +98,8 @@ def fetch_webapp_builds():
     return resp.json().get("message", {}).get("data", [])
 
 
-def get_yesterday_builds(builds):
-    start_utc, end_utc = get_yesterday_time_range_utc()
+def get_report_period_builds(builds):
+    start_utc, end_utc = get_report_date_range_utc()
     return [
         b for b in builds
         if "createdAt" in b and start_utc <= datetime.strptime(b["createdAt"], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=UTC) <= end_utc
@@ -95,14 +118,14 @@ def get_best_build(builds, suite_id):
 
 def summarize_webapp_best_of_yesterday():
     builds = fetch_webapp_builds()
-    yesterday_builds = get_yesterday_builds(builds)
+    period_builds = get_report_period_builds(builds)
     summaries = []
     total_passed = total_failed = total_total = 0
 
     for suite_name, suite_id in SUITE_IDS.items():
-        best_build = get_best_build(yesterday_builds, suite_id)
+        best_build = get_best_build(period_builds, suite_id)
         if not best_build:
-            summaries.append(f"{suite_name} - N/A [No builds yesterday]")
+            summaries.append(f"{suite_name} - N/A [No builds {get_report_label()}]")
             continue
 
         passed, failed, skipped, total, stability = extract_test_counts(best_build)
@@ -132,7 +155,7 @@ def summarize_desktop_best_of_yesterday():
     }
 
     summaries = ["*LCNC Desktop Tests*"]
-    start_utc, end_utc = get_yesterday_time_range_utc()
+    start_utc, end_utc = get_report_date_range_utc()
 
     for platform, url in urls.items():
         try:
@@ -143,7 +166,7 @@ def summarize_desktop_best_of_yesterday():
                 summaries.append(f"{platform} - N/A (No builds found)")
                 continue
 
-            # Filter builds finished yesterday (IST)
+            # Filter builds finished on the report date (IST)
             filtered = []
             for b in builds:
                 try:
@@ -154,7 +177,7 @@ def summarize_desktop_best_of_yesterday():
                     continue
 
             if not filtered:
-                summaries.append(f"{platform} - N/A (No builds yesterday)")
+                summaries.append(f"{platform} - N/A (No builds {get_report_label()})")
                 continue
 
             # NEW: Filter out builds with less than 50 cases
@@ -168,7 +191,7 @@ def summarize_desktop_best_of_yesterday():
                     valid_builds.append(b)
 
             if not valid_builds:
-                summaries.append(f"{platform} - N/A (No builds ≥ 50 cases yesterday)")
+                summaries.append(f"{platform} - N/A (No builds ≥ 50 cases {get_report_label()})")
                 continue
 
             # Find best build (highest stability)
@@ -189,7 +212,7 @@ def summarize_desktop_best_of_yesterday():
                     best_passed, best_failed, best_total = passed, failed, total
 
             if not best_build:
-                summaries.append(f"{platform} - N/A (No valid builds yesterday)")
+                summaries.append(f"{platform} - N/A (No valid builds {get_report_label()})")
                 continue
 
             when_dt = (
@@ -220,7 +243,7 @@ def summarize_api_best_of_yesterday():
     resp.raise_for_status()
     builds = resp.json().get("builds", [])
 
-    start_utc, end_utc = get_yesterday_time_range_utc()
+    start_utc, end_utc = get_report_date_range_utc()
     summaries = ["*LCNC API Tests*"]
 
     for target in TARGETS:
@@ -235,7 +258,7 @@ def summarize_api_best_of_yesterday():
                 continue
 
         if not filtered:
-            summaries.append(f"{target} - N/A (No builds yesterday)")
+            summaries.append(f"{target} - N/A (No builds {get_report_label()})")
             continue
 
         best_build = None
@@ -256,7 +279,7 @@ def summarize_api_best_of_yesterday():
                 best_passed, best_failed, best_total = passed, failed, total
 
         if not best_build:
-            summaries.append(f"{target} - N/A (No valid runs yesterday)")
+            summaries.append(f"{target} - N/A (No valid runs {get_report_label()})")
             continue
 
         when_dt = datetime.fromisoformat(best_build["finishedAt"].replace("Z", "+00:00")) \
@@ -290,7 +313,7 @@ def main():
         api_msg = summarize_api_best_of_yesterday()
 
         final_message = (
-            f"Yesterday's Stability Results\n\n"
+            f"{get_report_label()}'s Stability Results\n\n"
             f"{webapp_msg}\n\n"
             f"{desktop_msg}\n\n"
             f"{api_msg}\n\n"
